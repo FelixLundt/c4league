@@ -1,1 +1,5 @@
 .DS_Store
+c4league-c67e7716e473*
+.env
+.pytest_cache
+**pycache**
