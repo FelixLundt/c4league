@@ -4,24 +4,23 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 import numpy as np
-from .gcs import TournamentStorage
+from .cloud_storage import TournamentStorage
+
+TeamStats = Dict[str, Any]
+GameStats = Dict[str, Any]
 
 class GameStorage:
     def __init__(self, storage: TournamentStorage):
         self.storage = storage
         
-    def save_game(self, 
+    def save_game(self, *, 
                  tournament_path: str,
-                 team1: str,
-                 team2: str,
+                 team1: TeamStats,
+                 team2: TeamStats,
                  game_number: int,
-                 moves: List[int],
-                 winner: str,
-                 reason: str,
+                 game_stats: GameStats,
                  initial_board: Optional[List[List[int]]] = None,
-                 runtime_stats: Optional[Dict[str, Any]] = None,
-                 team1_submission: Optional[str] = None,
-                 team2_submission: Optional[str] = None) -> str:
+                 runtime_stats: Optional[Dict[str, Any]] = None) -> str:
         """Save a game result.
         
         Args:
