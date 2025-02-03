@@ -1,0 +1,19 @@
+services:
+  dev:
+    env_file:
+      - .env
+    
+    build: .
+    
+    volumes:
+      - .:/c4league:rshared 
+        
+    ports:
+      - "5678:5678"  # for debugpy
+    
+    environment:
+      - GITHUB_TOKEN  # Pass through from host
+    
+    # Add these for better development experience
+    tty: true        # Keeps container running and provides terminal
+    stdin_open: true # Enables interactive sessions
