@@ -1,0 +1,28 @@
+Bootstrap: docker
+From: python:3.12-slim
+
+%files
+    # Copy only the essential files
+    ./agent/* /opt/agent_base/
+    ./requirements.txt /opt/requirements.txt
+    ./c4utils /opt/c4utils
+
+%post
+    # Install dependencies
+    pip install --no-cache-dir -r /opt/requirements.txt
+
+    # Create the agent.py file in /opt without indentation
+    echo 'from c4utils.agent_sandbox.timeout import with_timeout
+from agent_base import generate_move as _generate_move
+
+generate_move = with_timeout(_generate_move)' > /opt/agent.py
+
+    # Add /opt to PYTHONPATH
+    echo 'export PYTHONPATH="/opt:${PYTHONPATH}"' >> /environment
+
+%environment
+    export PYTHONPATH="/opt:${PYTHONPATH}"
+
+%test
+    cd /opt/agent_base && ls -la
+    python3 -c "from agent import generate_move"
