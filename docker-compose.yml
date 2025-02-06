@@ -4,6 +4,12 @@ services:
       - .env
     
     build: .
+
+    cap_add:
+      - ALL
+    security_opt:
+      - seccomp:unconfined
+    privileged: true
     
     volumes:
       - .:/c4league:rshared 
