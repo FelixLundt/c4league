@@ -5,6 +5,7 @@ import tempfile
 from dotenv import load_dotenv
 from c4league.storage.cloud_storage import download_agent
 import subprocess
+
 load_dotenv()
 
 @dataclass
@@ -43,11 +44,14 @@ def get_containerized_agents() -> list[TournamentPlayer]:
     return containerized_agents
                             
 def get_tournament_player_from_sif(file: str) -> TournamentPlayer:
-    team_name, agent_name, version = file.split("_")
+    team_name, agent_name, version = file.rstrip(".sif").split("_")
     return TournamentPlayer(team_name, agent_name, version)
 
 def get_sif_file_name_from_tournament_player(tournament_player: TournamentPlayer) -> str:
     return f"{tournament_player.team_name}_{tournament_player.agent_name}_{tournament_player.version}.sif"
+
+def get_sif_file_path_from_tournament_player(tournament_player: TournamentPlayer) -> str:
+    return os.path.join(os.getenv("AGENT_CONTAINER_DIRECTORY"), get_sif_file_name_from_tournament_player(tournament_player))
 
 def _get_diff_agents(submitted_agents: list[TournamentPlayer], containerized_agents: list[TournamentPlayer]) -> list[tuple[TournamentPlayer, str]]:
     diff_agents = []
@@ -74,35 +78,32 @@ def get_new_agents(submitted_agents: list[TournamentPlayer], containerized_agent
     return [agent[0] for agent in diff_agents if agent[1] != 'version']
 
 def containerize_agents(agents: list[TournamentPlayer]) -> None:
-    # for each agent:
-    # - create temporary directory
-    # - copy agent code to temporary directory
-    # - create def file
-    # - build container
-    # - move container to containerized_agents directory
-    # - delete temporary directory
     for agent in agents:
-
-        temp_dir = os.getenv("C4LEAGUE_ROOT_DIR") + '/tmp/' 
         try:
-            # temp_dir = tempfile.mkdtemp()
+            temp_dir = tempfile.mkdtemp()
+            print(f'Downloading agent {agent.team_name} {agent.agent_name} {agent.version} to {temp_dir}')
             download_agent(agent.get_dict(), temp_dir)
             # unzip agent code and delete zip file
-            print(os.listdir(temp_dir))
+            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
             filename = os.listdir(temp_dir)[0]
-            print(filename)
+            print(f'Found: {filename}. Unzipping...')
             shutil.unpack_archive(temp_dir + '/' +  filename, temp_dir)
+            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
             for item in os.listdir(temp_dir):
                 full_path = f'{temp_dir}' + '/' + f'{item}'
                 if os.path.isfile(full_path) and item != 'requirements.txt':
+                    print(f'Removing file {item}')
                     os.remove(full_path)
                 elif os.path.isdir(full_path) and item != 'agent':
+                    print(f'Removing directory {item}')
                     shutil.rmtree(full_path)
             
             # Copy c4utils package temporarily
+            print(f'Copying c4utils package to {temp_dir}')
             shutil.copytree(os.getenv("C4UTILS_DIR"), f'{temp_dir}/c4utils')
             
             # Copy def file
+            print(f'Copying def file to {temp_dir}')
             def_file_path = os.path.join(os.getenv("C4LEAGUE_ROOT_DIR"), 'build_agent.def')
             shutil.copy(def_file_path, temp_dir)
             
@@ -121,12 +122,3 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
         except Exception as e:
             print(f"Error building container for {agent.team_name} {agent.agent_name}: {e}")
             shutil.rmtree(temp_dir)
-
-#         shutil.copytree(os.getenv("AGENT_CODE_DIRECTORY") + "/" + agent.team_name + "/" + agent.agent_name, temp_dir)
-#         with open(temp_dir + "/def", "w") as f:
-#             f.write(f"Bootstrap: docker\nFrom: {os.getenv('AGENT_DOCKER_IMAGE')}")
-#         os.system(f"singularity build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} {temp_dir}/def")
-#         shutil.move(os.getenv('AGENT_CONTAINER_DIRECTORY') + "/" + get_sif_file_name_from_tournament_player(agent), os.getenv('AGENT_CONTAINER_DIRECTORY') + "/" + agent.team_name + "/" + agent.agent_name + ".sif")
-#         shutil.rmtree(temp_dir)
-
-# def make_def_file(temp_dir: str, agent: TournamentPlayer) -> None:
