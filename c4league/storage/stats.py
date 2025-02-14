@@ -4,13 +4,13 @@ Contains classes storing and processing game, match, and tournament statistics.
 
 import numpy as np
 from dataclasses import dataclass
-
+import time
 from c4utils.c4_types import Board, Move, Player
 
 from ..utils import TournamentPlayer, tournament_player_from_dict
 from ..params import MINI_MATCH_GAMES
 
-
+TIMESTAMP_FORMAT = '%Y-%m-%d-%H:%M:%S'
 
 @dataclass
 class GameStats:
@@ -24,7 +24,7 @@ class GameStats:
     moves: list[Move]
     winner: TournamentPlayer | None
     reason: str
-    traceback: str
+    traceback: str | None
 
     def generate_json(self) -> dict:
         return {
@@ -36,18 +36,19 @@ class GameStats:
             'player2': self.player2.get_dict(),
             'initial_board': self.initial_board.tolist(),
             'moves': [int(move) for move in self.moves],
-            'winner': 'player1' if self.winner == self.player1 else 'player2' if self.winner == self.player2 else None,
+            'winner': self.winner.get_dict() if self.winner is not None else None,
             'reason': self.reason,
             'traceback': self.traceback,
         }
 
-    def from_json(self, json_data: dict) -> 'GameStats':
-        raw_data = json_data
-        raw_data['initial_board'] = np.array(json_data['initial_board'], dtype=Player)
-        raw_data['moves'] = [Move(move) for move in json_data['moves']]
-        raw_data['player1'] = tournament_player_from_dict(json_data['player1'])
-        raw_data['player2'] = tournament_player_from_dict(json_data['player2'])
-        return GameStats(**raw_data)
+def game_stats_from_json(json_data: dict) -> 'GameStats':
+    raw_data = json_data
+    raw_data['initial_board'] = np.array(json_data['initial_board'], dtype=Player)
+    raw_data['moves'] = [Move(move) for move in json_data['moves']]
+    raw_data['player1'] = tournament_player_from_dict(json_data['player1'])
+    raw_data['player2'] = tournament_player_from_dict(json_data['player2'])
+    raw_data['winner'] = tournament_player_from_dict(json_data['winner']) if json_data['winner'] is not None else None
+    return GameStats(**raw_data)
 
 @dataclass
 class MatchStats:
@@ -68,11 +69,11 @@ class MatchStats:
             'result': {player.get_dict(): score for player, score in self.result.items()}
         }
     
-    def from_json(self, json_data: dict) -> 'MatchStats':
-        raw_data = json_data
-        raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
-        raw_data['result'] = {tournament_player_from_dict(player): score for player, score in json_data['result'].items()}
-        return MatchStats(**raw_data)
+def match_stats_from_json(json_data: dict) -> 'MatchStats':
+    raw_data = json_data
+    raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
+    raw_data['result'] = {tournament_player_from_dict(player): score for player, score in json_data['result'].items()}
+    return MatchStats(**raw_data)
 
 @dataclass
 class TournamentStats:
@@ -91,17 +92,18 @@ class TournamentStats:
             'table': [(player.get_dict(), score) for player, score in self.table]
         }
 
-    def from_json(self, json_data: dict) -> 'TournamentStats':
-        raw_data = json_data
-        raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
-        raw_data['table'] = [(tournament_player_from_dict(player), score) for player, score in json_data['table']]
-        return TournamentStats(**raw_data)
+def tournament_stats_from_json(json_data: dict) -> 'TournamentStats':
+    raw_data = json_data
+    raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
+    raw_data['table'] = [(tournament_player_from_dict(player), score) for player, score in json_data['table']]
+    return TournamentStats(**raw_data)
 
-def generate_match_stats_from_game_stats(games: list[GameStats], match_timestamp: str) -> MatchStats:
+def generate_match_stats_from_game_stats(games: list[GameStats]) -> MatchStats:
     games_ok = check_games(games)
     if not games_ok:
         raise ValueError("Invalid games provided")
     game_ids = [game.game_id for game in games]
+    match_timestamp = time.strftime(TIMESTAMP_FORMAT, min(time.strptime(game.timestamp, TIMESTAMP_FORMAT) for game in games))
 
     # Get all players in the match
     players = [games[0].player1, games[0].player2]
@@ -140,11 +142,12 @@ def check_games(games: list[GameStats]) -> bool:
         return False
     return True
 
-def generate_tournament_stats_from_match_stats(matches: list[MatchStats], tournament_timestamp: str) -> TournamentStats:
+def generate_tournament_stats_from_match_stats(matches: list[MatchStats]) -> TournamentStats:
     matches_ok = check_matches(matches)
     if not matches_ok:
         raise ValueError("Invalid matches provided")
     match_ids = [match.match_id for match in matches]
+    tournament_timestamp = time.strftime(TIMESTAMP_FORMAT, min(time.strptime(match.timestamp, TIMESTAMP_FORMAT) for match in matches))
     
     players = list(set(player for match in matches for player in match.players))
 

@@ -31,8 +31,8 @@ def game_stats_1(players, empty_board):
         tournament_id="12",
         initial_board=empty_board,
         moves=[Move(0), Move(5), Move(3)],
-        reason="winning_move",
-        traceback=""
+        reason="Connect 4",
+        traceback=None
     )
 
 @pytest.fixture
@@ -47,8 +47,8 @@ def game_stats_2(players, empty_board):
         tournament_id="12",
         initial_board=empty_board,
         moves=[Move(6)],
-        reason="winning_move",
-        traceback=""
+        reason="Connect 4",
+        traceback=None
     )
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def game_stats_3(players, empty_board):
         initial_board=empty_board,
         moves=[Move(0), Move(1)],
         reason="timeout",
-        traceback=""
+        traceback=None
     )
 
 @pytest.fixture
@@ -79,8 +79,8 @@ def game_stats_4(players, empty_board):
         tournament_id="12",
         initial_board=empty_board,
         moves=[Move(0), Move(4)],
-        reason="",
-        traceback=""
+        reason="Draw",
+        traceback=None
     )    
 
 @pytest.fixture
@@ -94,9 +94,9 @@ def game_stats_dict(game_stats_1):
         'player2': game_stats_1.player2.get_dict(),
         'initial_board': game_stats_1.initial_board.tolist(),
         'moves': [int(move) for move in game_stats_1.moves],
-        'winner': 'player1',
-        'reason': 'winning_move',
-        'traceback': ''
+        'winner': game_stats_1.winner.get_dict(),
+        'reason': 'Connect 4',
+        'traceback': None
     }
     return dicct
 
