@@ -112,7 +112,7 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
             def_file_path = os.path.join(os.getenv("C4LEAGUE_ROOT_DIR"), 'build_agent.def')
             shutil.copy(def_file_path, temp_dir)
             
-            # Create build script
+            # Create build script with local temp directory
             build_script = f"""#!/bin/bash
 #SBATCH --job-name=build_{agent.team_name}_{agent.agent_name}
 #SBATCH --output=build_%j.out
@@ -121,16 +121,26 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
 #SBATCH --ntasks=1
 #SBATCH --time=0:30:00
 
-# Debug: show working directory and contents
-echo "Working directory: $(pwd)"
+# Create temp directory on compute node
+TEMP_DIR=$(mktemp -d)
+echo "Created temp directory: $TEMP_DIR"
+
+# Copy files to compute node
+cp -r {temp_dir}/* $TEMP_DIR/
+echo "Copied files to compute node"
+
+# Show contents
 echo "Directory contents:"
-ls -la {temp_dir}
+ls -la $TEMP_DIR
 echo "Agent directory contents:"
-ls -la {temp_dir}/agent
+ls -la $TEMP_DIR/agent
 
 # Try to build
-cd {temp_dir}
-apptainer build --debug {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
+cd $TEMP_DIR
+apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
+
+# Clean up
+rm -rf $TEMP_DIR
 """
             script_path = os.path.join(temp_dir, "build.sh")
             with open(script_path, "w") as f:
