@@ -1,25 +1,23 @@
 Bootstrap: docker
-From: ubuntu:22.04
+From: python:3.10-slim-bullseye
+
+%files
+    # Copy requirements file into container
+    requirements.txt /requirements.txt
 
 %post
     # Set noninteractive frontend
     export DEBIAN_FRONTEND=noninteractive
     
-    # Install Python and other dependencies
-    apt-get update && apt-get install -y \
-        python3 \
-        python3-pip \
-        python3-venv \
-        && rm -rf /var/lib/apt/lists/*
+    # Create directories
+    mkdir -p /opt /tmp
 
-    # Install Python packages
-    pip3 install numpy==2.1.0
-    pip3 install python-dotenv==1.0.0
-    pip3 install google-cloud-storage
+    # Install Python packages from requirements
+    pip install --no-cache-dir -r /requirements.txt
 
 %environment
     export PYTHONPATH=/opt:$PYTHONPATH
-    export PATH=/usr/games:$PATH
+    export PYTHONUNBUFFERED=1
 
 %runscript
     python3 "$@"

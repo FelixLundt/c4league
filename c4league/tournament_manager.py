@@ -236,7 +236,6 @@ ls -la
 
 # Mount the script, the c4utils package, the results directory and the sif files at runtime
 apptainer exec \\
-    --env-file {os.getenv("C4LEAGUE_ROOT_DIR")}/.env \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
