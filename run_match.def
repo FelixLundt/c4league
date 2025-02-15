@@ -5,7 +5,7 @@ From: python:3.12-slim
     # Set noninteractive frontend
     export DEBIAN_FRONTEND=noninteractive
     
-    # Install system dependencies
+    # Install system dependencies first
     apt-get update && apt-get install -y \
         wget \
         squashfs-tools \
