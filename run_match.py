@@ -52,10 +52,10 @@ def parse_board(value):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--match-id', type=str, required=True)
     parser.add_argument('--agent-paths', type=str, nargs=2, required=True,
                        help='Paths to two agent containers')
     parser.add_argument('--starting-board', type=parse_board, required=True)
+    parser.add_argument('--results-dir', type=str, required=True)
     return parser.parse_args()
 
 def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: Path):
