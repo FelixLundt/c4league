@@ -5,6 +5,7 @@ import tempfile
 from dotenv import load_dotenv
 from c4league.storage.cloud_storage import download_agent
 import subprocess
+import time
 
 load_dotenv()
 
@@ -83,12 +84,14 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
             temp_dir = tempfile.mkdtemp()
             print(f'Downloading agent {agent.team_name} {agent.agent_name} {agent.version} to {temp_dir}')
             download_agent(agent.get_dict(), temp_dir)
-            # unzip agent code and delete zip file
+            
+            # Unzip agent code and clean up
             print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
             filename = os.listdir(temp_dir)[0]
             print(f'Found: {filename}. Unzipping...')
             shutil.unpack_archive(temp_dir + '/' +  filename, temp_dir)
-            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
+            
+            # Clean up files except agent code and requirements
             for item in os.listdir(temp_dir):
                 full_path = f'{temp_dir}' + '/' + f'{item}'
                 if os.path.isfile(full_path) and item != 'requirements.txt':
@@ -107,18 +110,46 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
             def_file_path = os.path.join(os.getenv("C4LEAGUE_ROOT_DIR"), 'build_agent.def')
             shutil.copy(def_file_path, temp_dir)
             
-            # Build container
-            print(f'Building in {temp_dir}')
-            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
-            subprocess.run([
-                "apptainer", 
-                "build", 
-                f"{os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)}", 
-                "build_agent.def"
-                ], check=True, cwd = temp_dir)
+            # Create build script
+            build_script = f"""#!/bin/bash
+#SBATCH --job-name=build_{agent.team_name}_{agent.agent_name}
+#SBATCH --output=build_%j.out
+#SBATCH --error=build_%j.err
+#SBATCH --partition=cpu-2h
+#SBATCH --ntasks=1
+#SBATCH --time=0:30:00
+
+cd {temp_dir}
+apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
+"""
+            script_path = os.path.join(temp_dir, "build.sh")
+            with open(script_path, "w") as f:
+                f.write(build_script)
+            os.chmod(script_path, 0o755)
             
-            # Clean up temp directory including c4utils
+            # Submit build job and wait for completion
+            print(f'Submitting build job for {agent.team_name} {agent.agent_name}')
+            result = subprocess.run(["sbatch", script_path], capture_output=True, text=True)
+            job_id = result.stdout.strip().split()[-1]
+            
+            # Wait for job completion
+            while True:
+                status = subprocess.run(
+                    ["sacct", "-j", job_id, "--format=State", "--noheader"], 
+                    capture_output=True, 
+                    text=True
+                ).stdout.strip()
+                
+                if status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                    break
+                time.sleep(10)
+            
+            if status != "COMPLETED":
+                raise Exception(f"Build job failed with status: {status}")
+            
+            # Clean up temp directory
             shutil.rmtree(temp_dir)
+            
         except Exception as e:
             print(f"Error building container for {agent.team_name} {agent.agent_name}: {e}")
             shutil.rmtree(temp_dir)

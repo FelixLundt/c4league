@@ -21,6 +21,14 @@ def run_tournament():
         print('Error: run_match.sif file not found in the directory containing this script.')
         exit(1)
 
+    # Check if the directory contains a c4league-c67e7716e473.json file
+    if not Path('c4league-c67e7716e473.json').exists():
+        print('Error: c4league-c67e7716e473.json file not found in the directory containing this script.')
+        exit(1)
+
+    # Check if directory contains /agents directory
+    Path('agents').mkdir(parents=True, exist_ok=True)
+
     # Get participants
     print('Gathering tournament participants...')
 

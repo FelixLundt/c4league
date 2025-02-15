@@ -16,21 +16,16 @@ we'll keep a container running.
 # Create directory for packages
 mkdir -p ~/.local/lib/python3.10/site-packages
 
-# Set PYTHONPATH to include user packages and project directory
-echo 'export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PWD:$PYTHONPATH' >> ~/.bashrc
+# Set PYTHONPATH to include user packages
+echo 'export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PYTHONPATH' >> ~/.bashrc
 source ~/.bashrc
 
 # Install packages in user directory
 pip3 install --user -r requirements.txt
 
-# Install c4utils package in container build directory
-cd /tmp
+# Install c4utils package
+export GITHUB_TOKEN=your_token_here
 pip3 install --user git+https://${GITHUB_TOKEN}@github.com/FelixLundt/c4utils.git
-cd -
-
-# Copy c4utils to match container directory
-mkdir -p /opt/c4utils
-cp -r ~/.local/lib/python3.10/site-packages/c4utils /opt/
 ```
 
 2. Build containers on a compute node:
