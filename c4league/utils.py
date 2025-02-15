@@ -129,6 +129,9 @@ apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from
                 f.write(build_script)
             os.chmod(script_path, 0o755)
             
+            # Check temp dir contents
+            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
+
             # Submit build job and wait for completion
             print(f'Submitting build job for {agent.team_name} {agent.agent_name}')
             result = subprocess.run(["sbatch", script_path], capture_output=True, text=True)
