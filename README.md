@@ -8,6 +8,78 @@ we'll keep a container running.
 - If there are, it will download the code from the cloud, build the container
 
 
+### Setup and Running
+
+1. Set up Python environment:
+
+```bash
+# Create virtual environment
+python3 -m venv ~/c4league_env
+
+# Activate environment
+source ~/c4league_env/bin/activate
+
+# Install requirements
+pip install -r requirements.txt
+
+# Install c4utils package
+export GITHUB_TOKEN=your_token_here
+pip install git+https://${GITHUB_TOKEN}@github.com/FelixLundt/c4utils.git
+```
+
+2. Build containers:
+
+```bash
+Build match runner container:
+    apptainer build run_match.sif run_match.def
+```
+
+3. Run tournament in background using screen:
+
+```bash
+Start new screen session:
+    screen -S c4league
+
+Inside screen:
+    source ~/c4league_env/bin/activate
+    ./schedule_tournaments.py
+```
+
+Detach from screen: Press Ctrl+A, then D
+```bash
+To manage the screen session:
+    # List sessions
+    screen -ls
+
+    # Reattach to session
+    screen -r c4league
+
+    # Kill session
+    screen -X -S c4league quit
+```
+
+Alternatively using tmux:
+
+```bash
+    # Start new session
+    tmux new -s c4league
+
+    # Inside tmux:
+    source ~/c4league_env/bin/activate
+    ./schedule_tournaments.py
+
+    # Detach: Press Ctrl+B, then D
+    # Reattach: tmux attach -t c4league
+    # Kill: tmux kill-session -t c4league
+```
+
+The tournament scheduler will:
+- Run every 4 hours
+- Check for new agents
+- Run matches if needed
+- Log activity to tournament_scheduler.log
+
+
 ### Ideas
 
 
