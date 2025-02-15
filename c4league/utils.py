@@ -121,8 +121,16 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
 #SBATCH --ntasks=1
 #SBATCH --time=0:30:00
 
+# Debug: show working directory and contents
+echo "Working directory: $(pwd)"
+echo "Directory contents:"
+ls -la {temp_dir}
+echo "Agent directory contents:"
+ls -la {temp_dir}/agent
+
+# Try to build
 cd {temp_dir}
-apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
+apptainer build --debug {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
 """
             script_path = os.path.join(temp_dir, "build.sh")
             with open(script_path, "w") as f:
