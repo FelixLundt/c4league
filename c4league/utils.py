@@ -128,34 +128,45 @@ echo "Created temp directory: $TEMP_DIR"
 # Create agent directory structure
 mkdir -p $TEMP_DIR/agent
 
-# Copy files to compute node
-echo "Copying files from {temp_dir}..."
-echo "Source contents:"
-ls -R {temp_dir}
+# Copy files from shared storage
+echo "Setting up build environment..."
+SHARED_DIR="{os.path.abspath(temp_dir)}"
+echo "Source directory: $SHARED_DIR"
 
-# Copy agent directory contents
-if [ -d "{temp_dir}/agent" ]; then
-    cp -r {temp_dir}/agent/* $TEMP_DIR/agent/
+# Copy files if they exist
+if [ -d "$SHARED_DIR/agent" ]; then
+    echo "Copying agent files..."
+    cp -rv "$SHARED_DIR/agent/"* "$TEMP_DIR/agent/"
 fi
 
-# Copy other necessary files
-cp {temp_dir}/build_agent.def $TEMP_DIR/
-cp -r {temp_dir}/c4utils $TEMP_DIR/
-if [ -f "{temp_dir}/requirements.txt" ]; then
-    cp {temp_dir}/requirements.txt $TEMP_DIR/
+if [ -f "$SHARED_DIR/build_agent.def" ]; then
+    echo "Copying build definition..."
+    cp -v "$SHARED_DIR/build_agent.def" "$TEMP_DIR/"
 fi
 
-echo "Destination contents:"
-ls -R $TEMP_DIR
+if [ -d "$SHARED_DIR/c4utils" ]; then
+    echo "Copying c4utils..."
+    cp -rv "$SHARED_DIR/c4utils" "$TEMP_DIR/"
+fi
+
+if [ -f "$SHARED_DIR/requirements.txt" ]; then
+    echo "Copying requirements..."
+    cp -v "$SHARED_DIR/requirements.txt" "$TEMP_DIR/"
+fi
+
+echo "Build directory contents:"
+ls -R "$TEMP_DIR"
 
 # Try to build
-cd $TEMP_DIR
+cd "$TEMP_DIR"
 pwd
 ls -la
-apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
+
+echo "Starting container build..."
+apptainer build "{os.path.abspath(os.path.join(os.getenv('AGENT_CONTAINER_DIRECTORY', ''), get_sif_file_name_from_tournament_player(agent)))}" build_agent.def
 
 # Clean up
-rm -rf $TEMP_DIR
+rm -rf "$TEMP_DIR"
 """
             script_path = os.path.join(temp_dir, "build.sh")
             with open(script_path, "w") as f:
