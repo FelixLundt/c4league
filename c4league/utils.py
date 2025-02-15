@@ -80,6 +80,7 @@ def get_new_agents(submitted_agents: list[TournamentPlayer], containerized_agent
 
 def containerize_agents(agents: list[TournamentPlayer]) -> None:
     for agent in agents:
+        temp_dir = None
         try:
             temp_dir = tempfile.mkdtemp()
             print(f'Downloading agent {agent.team_name} {agent.agent_name} {agent.version} to {temp_dir}')
@@ -215,9 +216,11 @@ rm -rf "$TEMP_DIR"
                 if not job_completed:
                     time.sleep(10)
             
-            # Clean up temp directory
-            shutil.rmtree(temp_dir)
-            
         except Exception as e:
             print(f"Error building container for {agent.team_name} {agent.agent_name}: {e}")
-            shutil.rmtree(temp_dir)
+            raise e
+        finally:
+            # Clean up temp directory only after job completes
+            if temp_dir and os.path.exists(temp_dir):
+                print(f"Cleaning up temporary directory: {temp_dir}")
+                shutil.rmtree(temp_dir)
