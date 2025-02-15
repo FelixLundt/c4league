@@ -53,8 +53,7 @@ def parse_board(value):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--match-id', type=str, required=True)
-    parser.add_argument('--agent1', type=str, required=True)
-    parser.add_argument('--agent2', type=str, required=True)
+    parser.add_argument('--agent-paths', type=str, required=True)
     parser.add_argument('--starting-board', type=parse_board, required=True)
     return parser.parse_args()
 
