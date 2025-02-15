@@ -139,22 +139,31 @@ apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from
             # Wait for job completion
             while True:
                 status_result = subprocess.run(
-                    ["sacct", "-j", job_id, "--format=State", "--parsable2", "--noheader"], 
+                    ["sacct", "-j", job_id, "--format=JobID,State", "--parsable2", "--noheader"], 
                     capture_output=True, 
                     text=True
                 )
                 if status_result.returncode != 0:
                     raise Exception(f"Failed to check job status: {status_result.stderr}")
                 
-                status = status_result.stdout.strip()
-                print(f"Current status for job {job_id}: {status}")
-                
-                if status in ["COMPLETED", "FAILED", "CANCELLED"]:
-                    break
+                # Get status of main job (not steps)
+                for line in status_result.stdout.strip().split('\n'):
+                    if line.strip():
+                        job_id_str, status = line.split('|')
+                        if job_id_str == str(job_id):  # Main job, not a step
+                            print(f"Current status for job {job_id}: {status}")
+                            if status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                                break
                 time.sleep(10)
             
-            if status != "COMPLETED":
-                raise Exception(f"Build job failed with status: {status}")
+            # Check build output file for errors
+            error_file = f"build_{job_id}.err"
+            if os.path.exists(error_file):
+                with open(error_file, 'r') as f:
+                    error_content = f.read()
+                    if error_content.strip():
+                        print(f"Build error output:\n{error_content}")
+                        raise Exception(f"Build failed with errors")
             
             # Clean up temp directory
             shutil.rmtree(temp_dir)
