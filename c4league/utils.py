@@ -100,6 +100,8 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
                 elif os.path.isdir(full_path) and item != 'agent':
                     print(f'Removing directory {item}')
                     shutil.rmtree(full_path)
+            # Check temp dir contents
+            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
             
             # Copy c4utils package temporarily
             print(f'Copying c4utils package to {temp_dir}')
