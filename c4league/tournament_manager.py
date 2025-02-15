@@ -241,8 +241,8 @@ apptainer exec \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
-    --bind $agent1_path:/opt/$agent1_name.sif \\
-    --bind $agent2_path:/opt/$agent2_name.sif \\
+    --bind $agent1_path:/opt/$agent1_name \\
+    --bind $agent2_path:/opt/$agent2_name \\
     run_match.sif \\
     python3 /opt/run_match.py \\
         --match-id $match_id \\
