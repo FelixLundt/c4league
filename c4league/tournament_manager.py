@@ -246,7 +246,7 @@ apptainer exec \\
     run_match.sif \\
     python3 /opt/run_match.py \\
         --match-id $match_id \\
-        --agent-paths /opt/$agent1_name.sif /opt/$agent2_name.sif \\
+        --agent-paths "/opt/$agent1_name" "/opt/$agent2_name" \\
         --starting-board {formatted_starting_board}
 """
         print('Writing job script to', self.job_script_path)
