@@ -121,48 +121,46 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
 #SBATCH --ntasks=1
 #SBATCH --time=0:30:00
 
+set -x  # Print commands as they're executed
+set -e  # Exit on error
+
 # Create temp directory on compute node
 TEMP_DIR=$(mktemp -d)
 echo "Created temp directory: $TEMP_DIR"
 
 # Create agent directory structure
-mkdir -p $TEMP_DIR/agent
+mkdir -p "$TEMP_DIR/agent"
 
 # Copy files from shared storage
-echo "Setting up build environment..."
 SHARED_DIR="{os.path.abspath(temp_dir)}"
 echo "Source directory: $SHARED_DIR"
+echo "Source directory contents:"
+ls -la "$SHARED_DIR"
 
-# Copy files if they exist
-if [ -d "$SHARED_DIR/agent" ]; then
-    echo "Copying agent files..."
-    cp -rv "$SHARED_DIR/agent/"* "$TEMP_DIR/agent/"
-fi
-
-if [ -f "$SHARED_DIR/build_agent.def" ]; then
-    echo "Copying build definition..."
-    cp -v "$SHARED_DIR/build_agent.def" "$TEMP_DIR/"
-fi
-
-if [ -d "$SHARED_DIR/c4utils" ]; then
-    echo "Copying c4utils..."
-    cp -rv "$SHARED_DIR/c4utils" "$TEMP_DIR/"
-fi
-
-if [ -f "$SHARED_DIR/requirements.txt" ]; then
-    echo "Copying requirements..."
-    cp -v "$SHARED_DIR/requirements.txt" "$TEMP_DIR/"
-fi
+# Copy files one by one
+echo "Copying files..."
+[ -d "$SHARED_DIR/agent" ] && cp -rv "$SHARED_DIR/agent/"* "$TEMP_DIR/agent/" || echo "No agent directory found"
+[ -f "$SHARED_DIR/build_agent.def" ] && cp -v "$SHARED_DIR/build_agent.def" "$TEMP_DIR/" || echo "No build_agent.def found"
+[ -d "$SHARED_DIR/c4utils" ] && cp -rv "$SHARED_DIR/c4utils" "$TEMP_DIR/" || echo "No c4utils directory found"
+[ -f "$SHARED_DIR/requirements.txt" ] && cp -v "$SHARED_DIR/requirements.txt" "$TEMP_DIR/" || echo "No requirements.txt found"
 
 echo "Build directory contents:"
-ls -R "$TEMP_DIR"
+ls -la "$TEMP_DIR"
+echo "Agent directory contents:"
+ls -la "$TEMP_DIR/agent" || echo "Agent directory is empty"
 
 # Try to build
-cd "$TEMP_DIR"
-pwd
+cd "$TEMP_DIR" || exit 1
+echo "Working directory: $(pwd)"
+echo "Files in working directory:"
 ls -la
 
 echo "Starting container build..."
+if [ ! -f "build_agent.def" ]; then
+    echo "ERROR: build_agent.def not found in working directory"
+    exit 1
+fi
+
 apptainer build "{os.path.abspath(os.path.join(os.getenv('AGENT_CONTAINER_DIRECTORY', ''), get_sif_file_name_from_tournament_player(agent)))}" build_agent.def
 
 # Clean up
