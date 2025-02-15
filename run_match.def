@@ -1,23 +1,12 @@
 Bootstrap: docker
-From: ubuntu:22.04
+From: python:3.12-slim
 
 %post
     # Set noninteractive frontend
     export DEBIAN_FRONTEND=noninteractive
 
-    # Install Python and system dependencies
-    apt-get update && apt-get install -y \
-        python3 \
-        python3-pip \
-        wget \
-        squashfs-tools \
-        cryptsetup \
-        && rm -rf /var/lib/apt/lists/*
-
-    # Install Apptainer for running agent containers
-    wget https://github.com/apptainer/apptainer/releases/download/v1.0.0/apptainer_1.0.0_amd64.deb
-    apt-get update && apt-get install -y ./apptainer_1.0.0_amd64.deb
-    rm apptainer_1.0.0_amd64.deb
+    # Install only Python packages we need
+    pip install numpy
 
 %environment
     export PYTHONPATH=/opt:$PYTHONPATH

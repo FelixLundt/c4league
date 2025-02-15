@@ -10,7 +10,7 @@ we'll keep a container running.
 
 ### Setup and Running
 
-1. Set up Python environment:
+1. Set up Python environment on the login node:
 
 ```bash
 # Create virtual environment
@@ -27,22 +27,25 @@ export GITHUB_TOKEN=your_token_here
 pip install git+https://${GITHUB_TOKEN}@github.com/FelixLundt/c4utils.git
 ```
 
-2. Build containers:
+2. Build containers on a compute node:
 
 ```bash
-Build match runner container:
-    apptainer build run_match.sif run_match.def
+# Request an interactive session
+srun --partition=cpu-2h --pty bash
+
+# Build containers
+apptainer build run_match.sif run_match.def
 ```
 
-3. Run tournament in background using screen:
+3. Run tournament scheduler on login node:
 
 ```bash
-Start new screen session:
-    screen -S c4league
+# Start new screen session
+screen -S c4league
 
-Inside screen:
-    source ~/c4league_env/bin/activate
-    ./schedule_tournaments.py
+# Inside screen:
+source ~/c4league_env/bin/activate
+./schedule_tournaments.py
 ```
 
 Detach from screen: Press Ctrl+A, then D
