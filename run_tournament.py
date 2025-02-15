@@ -60,9 +60,6 @@ def run_tournament():
     # - We need to set up a script to run the match
     # - The match needs to run several games and store the results (game results, match results)
 
-
-    manager = TournamentManager()
-
     # Run tournament
     print('Running tournament...')
     manager = TournamentManager()

@@ -125,18 +125,33 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
 TEMP_DIR=$(mktemp -d)
 echo "Created temp directory: $TEMP_DIR"
 
-# Copy files to compute node
-cp -r {temp_dir}/* $TEMP_DIR/
-echo "Copied files to compute node"
+# Create agent directory structure
+mkdir -p $TEMP_DIR/agent
 
-# Show contents
-echo "Directory contents:"
-ls -la $TEMP_DIR
-echo "Agent directory contents:"
-ls -la $TEMP_DIR/agent
+# Copy files to compute node
+echo "Copying files from {temp_dir}..."
+echo "Source contents:"
+ls -R {temp_dir}
+
+# Copy agent directory contents
+if [ -d "{temp_dir}/agent" ]; then
+    cp -r {temp_dir}/agent/* $TEMP_DIR/agent/
+fi
+
+# Copy other necessary files
+cp {temp_dir}/build_agent.def $TEMP_DIR/
+cp -r {temp_dir}/c4utils $TEMP_DIR/
+if [ -f "{temp_dir}/requirements.txt" ]; then
+    cp {temp_dir}/requirements.txt $TEMP_DIR/
+fi
+
+echo "Destination contents:"
+ls -R $TEMP_DIR
 
 # Try to build
 cd $TEMP_DIR
+pwd
+ls -la
 apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from_tournament_player(agent)} build_agent.def
 
 # Clean up
