@@ -130,15 +130,24 @@ apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from
             # Submit build job and wait for completion
             print(f'Submitting build job for {agent.team_name} {agent.agent_name}')
             result = subprocess.run(["sbatch", script_path], capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"Failed to submit job: {result.stderr}")
+            
             job_id = result.stdout.strip().split()[-1]
+            print(f"Build job submitted with ID: {job_id}")
             
             # Wait for job completion
             while True:
-                status = subprocess.run(
-                    ["sacct", "-j", job_id, "--format=State", "--noheader"], 
+                status_result = subprocess.run(
+                    ["sacct", "-j", job_id, "--format=State", "--parsable2", "--noheader"], 
                     capture_output=True, 
                     text=True
-                ).stdout.strip()
+                )
+                if status_result.returncode != 0:
+                    raise Exception(f"Failed to check job status: {status_result.stderr}")
+                
+                status = status_result.stdout.strip()
+                print(f"Current status for job {job_id}: {status}")
                 
                 if status in ["COMPLETED", "FAILED", "CANCELLED"]:
                     break
