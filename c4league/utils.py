@@ -137,7 +137,8 @@ apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from
             print(f"Build job submitted with ID: {job_id}")
             
             # Wait for job completion
-            while True:
+            job_completed = False
+            while not job_completed:
                 status_result = subprocess.run(
                     ["sacct", "-j", job_id, "--format=JobID,State", "--parsable2", "--noheader"], 
                     capture_output=True, 
@@ -153,17 +154,19 @@ apptainer build {os.getenv('AGENT_CONTAINER_DIRECTORY')}/{get_sif_file_name_from
                         if job_id_str == str(job_id):  # Main job, not a step
                             print(f"Current status for job {job_id}: {status}")
                             if status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                                job_completed = True
+                                if status != "COMPLETED":
+                                    # Check error file
+                                    error_file = f"build_{job_id}.err"
+                                    if os.path.exists(error_file):
+                                        with open(error_file, 'r') as f:
+                                            error_content = f.read()
+                                            print(f"Build error output:\n{error_content}")
+                                    raise Exception(f"Build job failed with status: {status}")
                                 break
-                time.sleep(10)
-            
-            # Check build output file for errors
-            error_file = f"build_{job_id}.err"
-            if os.path.exists(error_file):
-                with open(error_file, 'r') as f:
-                    error_content = f.read()
-                    if error_content.strip():
-                        print(f"Build error output:\n{error_content}")
-                        raise Exception(f"Build failed with errors")
+                
+                if not job_completed:
+                    time.sleep(10)
             
             # Clean up temp directory
             shutil.rmtree(temp_dir)
