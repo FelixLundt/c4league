@@ -202,11 +202,6 @@ class TournamentManager:
     
     def _create_job_script(self) -> str:
         """Create a Slurm job script template, to be submitted as an array job"""
-        # match_id, (player1, player2) = match
-        # container_paths = [get_sif_file_path_from_tournament_player(player) for player in (player1, player2)]
-        # container_names = [get_sif_file_name_from_tournament_player(player) for player in (player1, player2)]
-        
-        # match_results_dir = self._get_match_path(match_id)
         print(f'Creating job script: {self.job_script_path}')
         self.job_script_path.parent.mkdir(parents=True, exist_ok=True)
         self.job_script_path.touch() 
@@ -218,12 +213,10 @@ class TournamentManager:
 #SBATCH --error={self.logs_dir}/{self.tournament_id}_%a.err
 #SBATCH --array=1-{len(self.matches)}
 #SBATCH --partition=cpu-5h
-#SBATCH --ntasks=1                         # Number of tasks per job
-#SBATCH --time=0:22:00                    # Time limit
-#SBATCH --mem-per-cpu=20G # Memory per task
+#SBATCH --ntasks=1
+#SBATCH --time=0:22:00
+#SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=3
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=lundt@tu-berlin.de
 
 # Read match parameters from config file
 match_config=$(sed -n "$SLURM_ARRAY_TASK_ID"p {self.tournament_config_path})
@@ -233,28 +226,29 @@ agent2_path=$(echo $match_config | cut -d' ' -f3)
 agent1_name=$(basename $agent1_path)
 agent2_name=$(basename $agent2_path)
 
-# Print match parameters
-echo "Match ID: $match_id"
-echo "Agent 1 Path: $agent1_path"
-echo "Agent 2 Path: $agent2_path"
-echo "Agent 1 Name: $agent1_name"
-echo "Agent 2 Name: $agent2_name"
+echo "Starting match $match_id"
+echo "Working directory: $(pwd)"
+echo "Contents of current directory:"
+ls -la
 
 # Mount the script, the c4utils package, the results directory and the sif files at runtime
-apptainer run \\
-    --bind {str(self.c4league_package_root)}:{MATCH_CONTAINER_DIR}/c4league \\
-    --bind {os.getenv("C4UTILS_DIR")}:{MATCH_CONTAINER_DIR}/c4utils \\
-    --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:{MATCH_CONTAINER_DIR}/run_match.py \\
-    --bind {str(self.results_dir)}/$match_id:{MATCH_CONTAINER_DIR}/match_results/ \\
-    --bind $agent1_path:{MATCH_CONTAINER_DIR}/$agent1_name.sif \\
-    --bind $agent2_path:{MATCH_CONTAINER_DIR}/$agent2_name.sif \\
+apptainer exec \\
+    --bind {str(self.c4league_package_root)}:/opt/c4league \\
+    --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
+    --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
+    --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
+    --bind $agent1_path:/opt/$agent1_name.sif \\
+    --bind $agent2_path:/opt/$agent2_name.sif \\
     run_match.sif \\
-    python {MATCH_CONTAINER_DIR}/run_match.py \\
-    --starting-board {formatted_starting_board}
+    python3 /opt/run_match.py \\
+        --match-id $match_id \\
+        --agent1 /opt/$agent1_name.sif \\
+        --agent2 /opt/$agent2_name.sif \\
+        --starting-board {formatted_starting_board}
 """
         print('Writing job script to', self.job_script_path)
         self.job_script_path.write_text(script_content)
-        return str(self.job_script_path) 
+        return str(self.job_script_path)
 
     def _is_run_match_container_built(self) -> bool:
         """Check if the run_match container is built"""
