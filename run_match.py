@@ -120,4 +120,4 @@ def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: 
 if __name__ == '__main__':
     args = parse_args()
     agent_paths = [Path(agent_path) for agent_path in args.agent_paths]
-    run_match(agent_paths, args.starting_board, args.results_dir)
+    run_match(agent_paths, args.starting_board, Path(args.results_dir))

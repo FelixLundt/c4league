@@ -243,6 +243,8 @@ apptainer exec \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
+    --contain \\
+    --writable-tmpfs \\
     run_match.sif \\
     python3 /opt/run_match.py \\
         --agent-paths "/opt/$agent1_name" "/opt/$agent2_name" \\
