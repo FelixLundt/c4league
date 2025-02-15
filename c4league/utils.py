@@ -82,38 +82,29 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
     for agent in agents:
         temp_dir = None
         try:
-            temp_dir = tempfile.mkdtemp()
+            # Create temp directory in shared location
+            temp_dir = tempfile.mkdtemp(dir=os.getenv("C4LEAGUE_ROOT_DIR"))
             print(f'Downloading agent {agent.team_name} {agent.agent_name} {agent.version} to {temp_dir}')
             download_agent(agent.get_dict(), temp_dir)
             
-            # Unzip agent code and clean up
-            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
+            # Unzip agent code
             filename = os.listdir(temp_dir)[0]
-            print(f'Found: {filename}. Unzipping...')
-            shutil.unpack_archive(temp_dir + '/' +  filename, temp_dir)
+            shutil.unpack_archive(temp_dir + '/' + filename, temp_dir)
             
             # Clean up files except agent code and requirements
             for item in os.listdir(temp_dir):
-                full_path = f'{temp_dir}' + '/' + f'{item}'
+                full_path = os.path.join(temp_dir, item)
                 if os.path.isfile(full_path) and item != 'requirements.txt':
-                    print(f'Removing file {item}')
                     os.remove(full_path)
                 elif os.path.isdir(full_path) and item != 'agent':
-                    print(f'Removing directory {item}')
                     shutil.rmtree(full_path)
-            # Check temp dir contents
-            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
             
-            # Copy c4utils package temporarily
-            print(f'Copying c4utils package to {temp_dir}')
+            # Copy c4utils package and def file
             shutil.copytree(os.getenv("C4UTILS_DIR"), f'{temp_dir}/c4utils')
-            
-            # Copy def file
-            print(f'Copying def file to {temp_dir}')
             def_file_path = os.path.join(os.getenv("C4LEAGUE_ROOT_DIR"), 'build_agent.def')
             shutil.copy(def_file_path, temp_dir)
             
-            # Create build script with local temp directory
+            # Create build script
             build_script = f"""#!/bin/bash
 #SBATCH --job-name=build_{agent.team_name}_{agent.agent_name}
 #SBATCH --output=build_%j.out
@@ -122,105 +113,62 @@ def containerize_agents(agents: list[TournamentPlayer]) -> None:
 #SBATCH --ntasks=1
 #SBATCH --time=0:30:00
 
-set -x  # Print commands as they're executed
-set -e  # Exit on error
-
-# Create temp directory on compute node
 TEMP_DIR=$(mktemp -d)
-echo "Created temp directory: $TEMP_DIR"
-
-# Create agent directory structure
-mkdir -p "$TEMP_DIR/agent"
-
-# Copy files from shared storage
 SHARED_DIR="{os.path.abspath(temp_dir)}"
-echo "Source directory: $SHARED_DIR"
-echo "Source directory contents:"
-ls -la "$SHARED_DIR"
 
-# Copy files one by one
-echo "Copying files..."
-[ -d "$SHARED_DIR/agent" ] && cp -rv "$SHARED_DIR/agent/"* "$TEMP_DIR/agent/" || echo "No agent directory found"
-[ -f "$SHARED_DIR/build_agent.def" ] && cp -v "$SHARED_DIR/build_agent.def" "$TEMP_DIR/" || echo "No build_agent.def found"
-[ -d "$SHARED_DIR/c4utils" ] && cp -rv "$SHARED_DIR/c4utils" "$TEMP_DIR/" || echo "No c4utils directory found"
-[ -f "$SHARED_DIR/requirements.txt" ] && cp -v "$SHARED_DIR/requirements.txt" "$TEMP_DIR/" || echo "No requirements.txt found"
+# Set up build environment
+mkdir -p "$TEMP_DIR/agent"
+[ -d "$SHARED_DIR/agent" ] && cp -r "$SHARED_DIR/agent/"* "$TEMP_DIR/agent/"
+[ -f "$SHARED_DIR/build_agent.def" ] && cp "$SHARED_DIR/build_agent.def" "$TEMP_DIR/"
+[ -d "$SHARED_DIR/c4utils" ] && cp -r "$SHARED_DIR/c4utils" "$TEMP_DIR/"
+[ -f "$SHARED_DIR/requirements.txt" ] && cp "$SHARED_DIR/requirements.txt" "$TEMP_DIR/"
 
-echo "Build directory contents:"
-ls -la "$TEMP_DIR"
-echo "Agent directory contents:"
-ls -la "$TEMP_DIR/agent" || echo "Agent directory is empty"
-
-# Try to build
-cd "$TEMP_DIR" || exit 1
-echo "Working directory: $(pwd)"
-echo "Files in working directory:"
-ls -la
-
-echo "Starting container build..."
-if [ ! -f "build_agent.def" ]; then
-    echo "ERROR: build_agent.def not found in working directory"
-    exit 1
-fi
-
+cd "$TEMP_DIR"
 apptainer build "{os.path.abspath(os.path.join(os.getenv('AGENT_CONTAINER_DIRECTORY', ''), get_sif_file_name_from_tournament_player(agent)))}" build_agent.def
 
-# Clean up
 rm -rf "$TEMP_DIR"
 """
+            # Submit and monitor build job
             script_path = os.path.join(temp_dir, "build.sh")
             with open(script_path, "w") as f:
                 f.write(build_script)
             os.chmod(script_path, 0o755)
             
-            # Check temp dir contents
-            print(f'Files in {temp_dir}: {os.listdir(temp_dir)}')
-
-            # Submit build job and wait for completion
             print(f'Submitting build job for {agent.team_name} {agent.agent_name}')
             result = subprocess.run(["sbatch", script_path], capture_output=True, text=True)
             if result.returncode != 0:
                 raise Exception(f"Failed to submit job: {result.stderr}")
             
             job_id = result.stdout.strip().split()[-1]
-            print(f"Build job submitted with ID: {job_id}")
             
             # Wait for job completion
-            job_completed = False
-            while not job_completed:
+            while True:
                 status_result = subprocess.run(
                     ["sacct", "-j", job_id, "--format=JobID,State", "--parsable2", "--noheader"], 
-                    capture_output=True, 
-                    text=True
+                    capture_output=True, text=True
                 )
                 if status_result.returncode != 0:
                     raise Exception(f"Failed to check job status: {status_result.stderr}")
                 
-                # Get status of main job (not steps)
                 for line in status_result.stdout.strip().split('\n'):
                     if line.strip():
                         job_id_str, status = line.split('|')
-                        if job_id_str == str(job_id):  # Main job, not a step
-                            print(f"Current status for job {job_id}: {status}")
-                            if status in ["COMPLETED", "FAILED", "CANCELLED"]:
-                                job_completed = True
-                                if status != "COMPLETED":
-                                    # Check error file
-                                    error_file = f"build_{job_id}.err"
-                                    if os.path.exists(error_file):
-                                        with open(error_file, 'r') as f:
-                                            error_content = f.read()
+                        if job_id_str == str(job_id) and status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                            if status != "COMPLETED":
+                                error_file = f"build_{job_id}.err"
+                                if os.path.exists(error_file):
+                                    with open(error_file, 'r') as f:
+                                        error_content = f.read().strip()
+                                        if error_content:
                                             print(f"Build error output:\n{error_content}")
-                                    raise Exception(f"Build job failed with status: {status}")
-                                break
+                                raise Exception(f"Build job failed with status: {status}")
+                            return
                 
-                if not job_completed:
-                    time.sleep(10)
+                time.sleep(10)
             
         except Exception as e:
             print(f"Error building container for {agent.team_name} {agent.agent_name}: {e}")
             raise e
         finally:
-            # Clean up temp directory only after job completes
             if temp_dir and os.path.exists(temp_dir):
-                print(f"Cleaning up temporary directory: {temp_dir}")
                 shutil.rmtree(temp_dir)

@@ -233,6 +233,13 @@ agent2_path=$(echo $match_config | cut -d' ' -f3)
 agent1_name=$(basename $agent1_path)
 agent2_name=$(basename $agent2_path)
 
+# Print match parameters
+echo "Match ID: $match_id"
+echo "Agent 1 Path: $agent1_path"
+echo "Agent 2 Path: $agent2_path"
+echo "Agent 1 Name: $agent1_name"
+echo "Agent 2 Name: $agent2_name"
+
 # Mount the script, the c4utils package, the results directory and the sif files at runtime
 apptainer run \\
     --bind {str(self.c4league_package_root)}:{MATCH_CONTAINER_DIR}/c4league \\
