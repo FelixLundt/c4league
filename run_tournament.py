@@ -61,5 +61,5 @@ def run_tournament():
 
     manager.run_tournament()
 
-if __name__ == "main":
+if __name__ == "__main__":
     run_tournament()

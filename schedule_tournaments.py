@@ -1,18 +1,10 @@
-#!/home/felix/c4league_env/bin/python3
-"""Add shebang to use Python from virtual environment"""
+#!/usr/bin/env python3
+"""Tournament scheduler that runs periodically on the login node"""
 
-import os
-import sys
 import time
 from pathlib import Path
 import logging
 from datetime import datetime
-
-# Activate virtual environment if not already activated
-venv_path = Path.home() / "c4league_env"
-if not sys.prefix == str(venv_path):
-    activate_script = venv_path / "bin" / "activate_this.py"
-    exec(open(activate_script).read(), {'__file__': str(activate_script)})
 
 # Set up logging
 logging.basicConfig(
@@ -24,7 +16,7 @@ logging.basicConfig(
     ]
 )
 
-def run_tournament():
+def schedule_tournament():
     try:
         from run_tournament import run_tournament
         logging.info("Starting tournament...")
@@ -39,7 +31,7 @@ def main():
     logging.info("Tournament scheduler started")
     
     while True:
-        run_tournament()
+        schedule_tournament()
         next_run = datetime.now().timestamp() + INTERVAL
         logging.info(f"Next tournament scheduled for: {datetime.fromtimestamp(next_run)}")
         time.sleep(INTERVAL)

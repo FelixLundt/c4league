@@ -13,18 +13,24 @@ we'll keep a container running.
 1. Set up Python environment on the login node:
 
 ```bash
-# Create virtual environment
-python3 -m venv ~/c4league_env
+# Create directory for packages
+mkdir -p ~/.local/lib/python3.10/site-packages
 
-# Activate environment
-source ~/c4league_env/bin/activate
+# Set PYTHONPATH to include user packages and project directory
+echo 'export PYTHONPATH=$HOME/.local/lib/python3.10/site-packages:$PWD:$PYTHONPATH' >> ~/.bashrc
+source ~/.bashrc
 
-# Install requirements
-pip install -r requirements.txt
+# Install packages in user directory
+pip3 install --user -r requirements.txt
 
-# Install c4utils package
-export GITHUB_TOKEN=your_token_here
-pip install git+https://${GITHUB_TOKEN}@github.com/FelixLundt/c4utils.git
+# Install c4utils package in container build directory
+cd /tmp
+pip3 install --user git+https://${GITHUB_TOKEN}@github.com/FelixLundt/c4utils.git
+cd -
+
+# Copy c4utils to match container directory
+mkdir -p /opt/c4utils
+cp -r ~/.local/lib/python3.10/site-packages/c4utils /opt/
 ```
 
 2. Build containers on a compute node:
@@ -44,7 +50,6 @@ apptainer build run_match.sif run_match.def
 screen -S c4league
 
 # Inside screen:
-source ~/c4league_env/bin/activate
 ./schedule_tournaments.py
 ```
 
@@ -68,7 +73,6 @@ Alternatively using tmux:
     tmux new -s c4league
 
     # Inside tmux:
-    source ~/c4league_env/bin/activate
     ./schedule_tournaments.py
 
     # Detach: Press Ctrl+B, then D
