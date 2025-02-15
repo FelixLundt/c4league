@@ -205,7 +205,10 @@ class TournamentManager:
         print(f'Creating job script: {self.job_script_path}')
         self.job_script_path.parent.mkdir(parents=True, exist_ok=True)
         self.job_script_path.touch() 
-        formatted_starting_board = self.random_starting_board.flatten().tolist()
+        
+        # Format starting board as a bracketed list
+        board_list = self.random_starting_board.flatten().tolist()
+        formatted_starting_board = f"'[{','.join(map(str, board_list))}]'"
         
         script_content = f"""#!/bin/bash
 #SBATCH --job-name=tournament_{self.tournament_id}

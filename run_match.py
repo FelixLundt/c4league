@@ -51,50 +51,13 @@ def parse_board(value):
     return np.array(numbers).reshape(6, 7)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Run a match between two agents')
-    
-    parser.add_argument('--starting-board', 
-                        type=parse_board, 
-                        help='Initial board state as a flattened list of 42 integers')
-    
-    parser.add_argument(
-        '--results-dir',
-        type=str,
-        help='Directory to store match results'
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--match-id', type=str, required=True)
+    parser.add_argument('--agent1', type=str, required=True)
+    parser.add_argument('--agent2', type=str, required=True)
+    parser.add_argument('--starting-board', type=parse_board, required=True)
+    return parser.parse_args()
 
-    parser.add_argument(
-        '--agent-paths',
-        type=str,
-        nargs=2,
-        help='Paths to two agent.sif files. If not provided, will look for .sif files in /opt/agents'
-    )
-
-    args = parser.parse_args()
-    
-    # Convert starting board back to numpy array
-    args.starting_board = np.array(args.starting_board).reshape(6, 7)
-
-    if args.results_dir is None:
-        args.results_dir = '/opt/match_results'
-    else:
-        args.results_dir = Path(args.results_dir)
-
-    if args.agent_paths is not None:
-        agent_paths = [Path(path) for path in args.agent_paths]
-    else:
-        try:
-            agent_paths = [file_path for file_path in Path('/opt/agents').glob('*.sif')]
-            if not agent_paths:
-                raise FileNotFoundError("No .sif files found in /opt/agents")
-        except FileNotFoundError as e:
-            print(f"Error: {e}")
-            print("Please provide agent paths using --agent-paths or ensure /opt/agents exists and contains .sif files")
-            exit(1)
-    
-    return args
-
-    
 def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: Path):
     agent_names = [str(file_path.name) for file_path in agent_paths]
     players = [get_tournament_player_from_sif(agent_name) for agent_name in agent_names]
