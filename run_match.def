@@ -13,10 +13,12 @@ From: python:3.10-slim-bullseye
     mkdir -p /opt /tmp
 
     # Install Python packages from requirements
-    pip install --no-cache-dir -r /requirements.txt
+    python3 -m pip install --no-cache-dir -r /requirements.txt
+
 
 %environment
-    export PYTHONPATH=/opt:$PYTHONPATH
+    # Make sure /opt is in PYTHONPATH so Python can find our packages
+    export PYTHONPATH=/opt:/opt/c4league:/opt/c4utils:$PYTHONPATH
     export PYTHONUNBUFFERED=1
     # Set container-specific environment variables
     export MATCH_CONTAINER_DIR=/opt
