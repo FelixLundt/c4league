@@ -242,7 +242,7 @@ echo "Match ID: $match_id"
 echo "Agent 1: $agent1_path -> $agent1_name"
 echo "Agent 2: $agent2_path -> $agent2_name"
 
-# Mount the script, the c4utils package, the results directory and the sif files at runtime
+# Mount only existing paths
 apptainer exec \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
@@ -251,11 +251,9 @@ apptainer exec \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
     --bind /usr/bin/apptainer:/usr/bin/apptainer \\
-    --bind /usr/lib/apptainer:/usr/lib/apptainer \\
     --bind /etc/apptainer:/etc/apptainer \\
-    --bind /var/lib/apptainer:/var/lib/apptainer \\
-    --bind /usr/lib64:/usr/lib64 \\
-    --bind /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu \\
+    --bind /lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu \\
+    --bind /lib64:/lib64 \\
     --fakeroot \\
     --writable-tmpfs \\
     --net \\
