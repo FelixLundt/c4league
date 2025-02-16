@@ -17,18 +17,9 @@ From: python:3.10-slim-bullseye
 
 
 %environment
-    # Make sure /opt is in PYTHONPATH so Python can find our packages
-    export PYTHONPATH=/opt:/opt/c4league:/opt/c4utils:$PYTHONPATH
+    export PYTHONPATH=/opt:$PYTHONPATH
     export PYTHONUNBUFFERED=1
-    # Set container-specific environment variables
-    export MATCH_CONTAINER_DIR=/opt
-    export C4LEAGUE_ROOT_DIR=/opt/c4league
-    export C4UTILS_DIR=/opt/c4utils
-    export AGENT_CONTAINER_DIRECTORY=/opt
-    export TOURNAMENT_RESULTS_DIRECTORY=/opt/match_results
-    export TOURNAMENT_LOGS_DIRECTORY=/opt/match_results
-    export TOURNAMENT_CONFIG_DIRECTORY=/opt/match_results
-    export TOURNAMENT_JOB_SCRIPT_DIRECTORY=/opt/match_results
+
 
 %runscript
     python3 "$@"

@@ -37,9 +37,8 @@ import traceback
 from c4utils.match import play_match
 from c4utils.c4_types import Player, PLAYER1, PLAYER2, BOARD_SIZE
 
-from c4league.utils import get_tournament_player_from_sif
+from c4league.utils import get_tournament_player_from_sif, generate_id
 from c4league.storage.stats import GameStats, TIMESTAMP_FORMAT
-from c4league.tournament_manager import generate_id
 from c4league.params import TIMEOUT
 
 EMPTY_BOARD = np.zeros(BOARD_SIZE, dtype=Player)

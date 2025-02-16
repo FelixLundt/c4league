@@ -65,7 +65,7 @@ class TournamentManager:
         self.matches = self._create_matches(self.participants)
         print(f'Created {len(self.matches)} matches')
 
-        self.tournament_config_path = Path(os.getenv("TOURNAMENT_CONFIG_DIRECTORY")) / f'{self.tournament_id}.txt'
+        self.tournament_config_path = Path(os.getenv("TOURNAMENT_CONFIG_DIRECTORY", "/opt/match_results")) / f'{self.tournament_id}.txt'
         print(f'Creating tournament config file: {self.tournament_config_path}')
         self.tournament_config_path.parent.mkdir(parents=True, exist_ok=True)
         self.tournament_config_path.touch()
@@ -243,7 +243,7 @@ echo "Agent 2: $agent2_path -> $agent2_name"
 apptainer exec \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
     --bind {os.getenv("C4UTILS_DIR", "/opt/c4utils")}:/opt/c4utils \\
-    --bind {os.getenv("C4LEAGUE_ROOT_DIR", "/opt/c4league")}/run_match.py:/opt/run_match.py \\
+    --bind {str(self.c4league_package_root)}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
