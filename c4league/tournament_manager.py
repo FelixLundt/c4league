@@ -11,8 +11,9 @@ import json
 from c4utils.c4_types import Move, Player, NO_PLAYER
 from c4utils.match import GameState
 
-from c4league.utils import get_containerized_agents, TournamentPlayer, \
+from c4league.container_utils import get_containerized_agents, TournamentPlayer, \
     get_sif_file_path_from_tournament_player, get_sif_file_name_from_tournament_player
+from c4league.utils import generate_id
 from c4league.params import TIMEOUT
 from c4league.storage.stats import GameStats, MatchStats, TournamentStats, \
     game_stats_from_json, match_stats_from_json, tournament_stats_from_json, \
@@ -23,12 +24,7 @@ load_dotenv()
 MatchData = dict[str, tuple[TournamentPlayer, TournamentPlayer]]
 Match = tuple[str, tuple[TournamentPlayer, TournamentPlayer]]
 
-ID_DIGITS = 5
-
 MATCH_CONTAINER_DIR = Path(os.getenv("MATCH_CONTAINER_DIR", "/opt"))
-
-def generate_id() -> str:
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=ID_DIGITS))
 
 class TournamentManager:
     """

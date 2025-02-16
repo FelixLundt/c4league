@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import time
 from c4utils.c4_types import Board, Move, Player
 
-from ..utils import TournamentPlayer, tournament_player_from_dict
+from ..container_utils import TournamentPlayer, tournament_player_from_dict
 from ..params import MINI_MATCH_GAMES
 
 TIMESTAMP_FORMAT = '%Y-%m-%d-%H:%M:%S'

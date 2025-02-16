@@ -1,7 +1,7 @@
 import os
 import json
 from c4league.storage.cloud_storage import get_submitted_agents, download_agent
-from c4league.utils import get_containerized_agents, get_new_agents, get_updated_agents, \
+from c4league.container_utils import get_containerized_agents, get_new_agents, get_updated_agents, \
     TournamentPlayer, containerize_agents
 from google.cloud import storage
 import numpy as np

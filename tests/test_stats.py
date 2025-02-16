@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from c4league.utils import TournamentPlayer, tournament_player_from_dict
+from c4league.container_utils import TournamentPlayer, tournament_player_from_dict
 from c4league.storage.stats import GameStats, MatchStats, TournamentStats, generate_match_stats_from_game_stats, \
     generate_tournament_stats_from_match_stats
 from c4utils.c4_types import Board, Move, Player

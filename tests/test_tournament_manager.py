@@ -1,6 +1,6 @@
 import pytest
 from c4league.tournament_manager import TournamentManager
-from c4league.utils import TournamentPlayer
+from c4league.container_utils import TournamentPlayer
 
 def test_tournament_manager():
     manager = TournamentManager()

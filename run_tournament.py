@@ -4,9 +4,8 @@ This script is used to run a tournament.
 from pathlib import Path
 from c4league.tournament_manager import TournamentManager
 from c4league.storage.cloud_storage import get_submitted_agents
-from c4league.utils import TournamentPlayer
-from c4league.utils import get_new_agents, get_updated_agents, get_containerized_agents
-from c4league.utils import containerize_agents
+from c4league.utils import TournamentPlayer, get_new_agents, get_updated_agents
+from c4league.container_utils import containerize_agents, get_containerized_agents
 
 
 def run_tournament():
