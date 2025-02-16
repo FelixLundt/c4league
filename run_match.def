@@ -19,6 +19,7 @@ From: python:3.10-slim-bullseye
 %environment
     export PYTHONPATH=/opt:$PYTHONPATH
     export PYTHONUNBUFFERED=1
+    export PATH=/usr/local/bin:$PATH
 
 
 %runscript
