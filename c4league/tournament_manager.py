@@ -229,6 +229,14 @@ echo "Python version: $(python3 --version)"
 echo "Environment variables:"
 env | sort
 
+# Set environment variables
+export MATCH_CONTAINER_DIR=/opt
+export C4LEAGUE_ROOT_DIR=/opt/c4league
+export C4UTILS_DIR=/opt/c4utils
+export AGENT_CONTAINER_DIRECTORY=/opt
+export TOURNAMENT_RESULTS_DIRECTORY=/opt/match_results
+export TOURNAMENT_LOGS_DIRECTORY=/opt/match_results
+
 # Read match parameters from config file
 match_config=$(sed -n "$SLURM_ARRAY_TASK_ID"p {self.tournament_config_path})
 match_id=$(echo $match_config | cut -d' ' -f1)
@@ -245,8 +253,8 @@ echo "Agent 2: $agent2_path -> $agent2_name"
 # Mount only existing paths
 apptainer exec \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
-    --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
-    --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
+    --bind {os.getenv("C4UTILS_DIR", "/opt/c4utils")}:/opt/c4utils \\
+    --bind {os.getenv("C4LEAGUE_ROOT_DIR", "/opt/c4league")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
