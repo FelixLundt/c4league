@@ -248,9 +248,10 @@ apptainer exec \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
     --bind /usr/bin/apptainer:/usr/bin/apptainer \\
+    --bind /usr/bin/unsquashfs:/usr/bin/unsquashfs \\
+    --bind /usr/bin/fusermount:/usr/bin/fusermount \\
     --bind /etc/apptainer:/etc/apptainer \\
     --bind /lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu \\
-    --bind /lib64:/lib64 \\
     --fakeroot \\
     --writable-tmpfs \\
     --net \\
