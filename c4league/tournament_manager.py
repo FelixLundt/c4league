@@ -34,12 +34,15 @@ class TournamentManager:
     id_digits: int = 5
     starting_moves_truncate_prob: float = 0.2   # geometric distribution, mean 5
     starting_moves_truncate_max: int = 10
-    c4league_package_root: Path = Path(os.getenv("C4LEAGUE_ROOT_DIR")) / 'c4league/'
+    root_dir = os.getenv("C4LEAGUE_ROOT_DIR")
+    if root_dir is None:
+        raise ValueError("C4LEAGUE_ROOT_DIR not set")
+    c4league_package_root: Path = Path(root_dir) / 'c4league/'
     move_timeout: float = TIMEOUT
 
     def __init__(self):
         print('Initializing tournament manager...')
-        self.agent_dir = Path(os.getenv("AGENT_CONTAINER_DIRECTORY"))
+        self.agent_dir = Path(os.getenv("AGENT_CONTAINER_DIRECTORY", "/opt"))
         self.gcs_bucket = os.getenv("GCS_BUCKET_NAME")
         self.jobs: dict[str, dict] = {}
 
@@ -250,8 +253,16 @@ apptainer exec \\
     --bind /usr/bin/apptainer:/usr/bin/apptainer \\
     --bind /usr/bin/unsquashfs:/usr/bin/unsquashfs \\
     --bind /usr/bin/fusermount:/usr/bin/fusermount \\
+    --bind /usr/bin/squashfuse:/usr/bin/squashfuse \\
+    --bind /usr/bin/fuse2fs:/usr/bin/fuse2fs \\
+    --bind /usr/bin/fusermount3:/usr/bin/fusermount3 \\
     --bind /etc/apptainer:/etc/apptainer \\
+    --bind /usr/libexec/apptainer:/usr/libexec/apptainer \\
+    --bind /usr/libexec/apptainer/bin/starter:/usr/libexec/apptainer/bin/starter \\
+    --bind /usr/libexec/apptainer/bin/squashfuse_ll:/usr/libexec/apptainer/bin/squashfuse_ll \\
+    --bind /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2 \\
     --bind /lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu \\
+    --bind /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu \\
     --fakeroot \\
     --writable-tmpfs \\
     --net \\
