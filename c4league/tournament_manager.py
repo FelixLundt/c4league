@@ -221,12 +221,13 @@ class TournamentManager:
 #SBATCH --mem-per-cpu=20G
 #SBATCH --cpus-per-task=3
 
-# Export required environment variables
-export MATCH_CONTAINER_DIR=/opt
-export C4LEAGUE_ROOT_DIR=/opt/c4league
-export C4UTILS_DIR=/opt/c4utils
-export AGENT_CONTAINER_DIRECTORY=/opt
-export TOURNAMENT_RESULTS_DIRECTORY=/opt/match_results
+# Debug info
+echo "Debug information:"
+echo "Current directory: $(pwd)"
+echo "Apptainer version: $(apptainer --version)"
+echo "Python version: $(python3 --version)"
+echo "Environment variables:"
+env | sort
 
 # Read match parameters from config file
 match_config=$(sed -n "$SLURM_ARRAY_TASK_ID"p {self.tournament_config_path})
@@ -236,20 +237,25 @@ agent2_path=$(echo $match_config | cut -d' ' -f3)
 agent1_name=$(basename $agent1_path)
 agent2_name=$(basename $agent2_path)
 
-echo "Starting match $match_id"
-echo "Working directory: $(pwd)"
-echo "Contents of current directory:"
-ls -la
+echo "Match parameters:"
+echo "Match ID: $match_id"
+echo "Agent 1: $agent1_path -> $agent1_name"
+echo "Agent 2: $agent2_path -> $agent2_name"
 
 # Mount the script, the c4utils package, the results directory and the sif files at runtime
 apptainer exec \\
-    --env-file {os.getenv("C4LEAGUE_ROOT_DIR")}/.env \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
+    --bind /usr/bin/apptainer:/usr/bin/apptainer \\
+    --bind /usr/lib/apptainer:/usr/lib/apptainer \\
+    --bind /etc/apptainer:/etc/apptainer \\
+    --bind /var/lib/apptainer:/var/lib/apptainer \\
+    --bind /usr/lib64:/usr/lib64 \\
+    --bind /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu \\
     --fakeroot \\
     --writable-tmpfs \\
     --net \\
