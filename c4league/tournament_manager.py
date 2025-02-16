@@ -242,7 +242,7 @@ echo "Agent 2: $agent2_path -> $agent2_name"
 # Mount only existing paths
 apptainer exec \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
-    --bind {os.getenv("C4UTILS_DIR", "/opt/c4utils")}:/opt/c4utils \\
+    --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
@@ -255,7 +255,6 @@ apptainer exec \\
     --fakeroot \\
     --writable-tmpfs \\
     --net \\
-    --containall \\
     run_match.sif \\
     python3 /opt/run_match.py \\
         --agent-paths "/opt/$agent1_name" "/opt/$agent2_name" \\
