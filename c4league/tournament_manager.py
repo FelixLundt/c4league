@@ -236,17 +236,14 @@ ls -la
 
 # Mount the script, the c4utils package, the results directory and the sif files at runtime
 apptainer exec \\
+    --privileged \\
     --bind {str(self.c4league_package_root)}:/opt/c4league \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
     --bind $agent1_path:/opt/$agent1_name \\
     --bind $agent2_path:/opt/$agent2_name \\
-    --bind /usr/local/bin/apptainer:/usr/local/bin/apptainer \\
-    --bind /usr/bin/apptainer:/usr/bin/apptainer \\
-    --bind /etc/apptainer:/etc/apptainer \\
     --contain \\
-    --writable-tmpfs \\
     run_match.sif \\
     python3 /opt/run_match.py \\
         --agent-paths "/opt/$agent1_name" "/opt/$agent2_name" \\

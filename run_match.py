@@ -66,7 +66,6 @@ def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: 
 
     print(f'Setting up match {match_id}...')
     tournament_id = match_id.split('_')[0]
-    id_digits = (len(match_id) - 3) // 2  # underscore as well as 't' and 'm' prefixes
 
     # Run two normal games
     for _starting_board in [EMPTY_BOARD, starting_board]:
