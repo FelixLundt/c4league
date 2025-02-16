@@ -4,6 +4,8 @@ From: python:3.10-slim-bullseye
 %files
     # Copy requirements file into container
     requirements.txt /requirements.txt
+    # Copy environment file into container
+    container.env /opt/.env
 
 %post
     # Set noninteractive frontend

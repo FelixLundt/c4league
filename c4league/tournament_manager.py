@@ -17,6 +17,7 @@ from c4league.params import TIMEOUT
 from c4league.storage.stats import GameStats, MatchStats, TournamentStats, \
     game_stats_from_json, match_stats_from_json, tournament_stats_from_json, \
     generate_match_stats_from_game_stats, generate_tournament_stats_from_match_stats
+
 load_dotenv()
 
 MatchData = dict[str, tuple[TournamentPlayer, TournamentPlayer]]
@@ -228,14 +229,6 @@ echo "Apptainer version: $(apptainer --version)"
 echo "Python version: $(python3 --version)"
 echo "Environment variables:"
 env | sort
-
-# Set environment variables
-export MATCH_CONTAINER_DIR=/opt
-export C4LEAGUE_ROOT_DIR=/opt/c4league
-export C4UTILS_DIR=/opt/c4utils
-export AGENT_CONTAINER_DIRECTORY=/opt
-export TOURNAMENT_RESULTS_DIRECTORY=/opt/match_results
-export TOURNAMENT_LOGS_DIRECTORY=/opt/match_results
 
 # Read match parameters from config file
 match_config=$(sed -n "$SLURM_ARRAY_TASK_ID"p {self.tournament_config_path})
