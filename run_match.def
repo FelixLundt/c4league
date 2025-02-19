@@ -17,6 +17,8 @@ From: python:3.12-slim
     apt-get update && apt-get install -y \
         wget \
         gnupg \
+        build-essential \
+        python3-dev \
         && rm -rf /var/lib/apt/lists/*
 
     # Install system dependencies for Apptainer
@@ -35,6 +37,9 @@ From: python:3.12-slim
     
     # Create directories
     mkdir -p /opt
+
+    # Install setuptools first
+    python3 -m pip install --no-cache-dir setuptools wheel
 
     # Install Python packages from requirements
     python3 -m pip install --no-cache-dir -r /requirements.txt
