@@ -248,8 +248,8 @@ apptainer exec \\
     --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
     --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
     --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
-    --bind $agent1_path:/opt/$agent1_name \\
-    --bind $agent2_path:/opt/$agent2_name \\
+    --bind $agent1_path:/opt/$(basename $agent1_path .sif) \\
+    --bind $agent2_path:/opt/$(basename $agent2_path .sif) \\
     --bind /usr/bin/apptainer:/usr/bin/apptainer \\
     --bind /usr/bin/unsquashfs:/usr/bin/unsquashfs \\
     --bind /usr/bin/fusermount:/usr/bin/fusermount \\
@@ -268,15 +268,20 @@ apptainer exec \\
     --bind /proc:/proc \\
     --bind /sys:/sys \\
     --bind /dev:/dev \\
-    --no-home \\
-    --fakeroot \\
+    --bind /var/lib/apptainer:/var/lib/apptainer \\
+    --bind /var/run/apptainer:/var/run/apptainer \\
+    --bind /lib64:/lib64 \\
+    --bind /usr/lib64:/usr/lib64 \\
+    --contain \\
     --writable-tmpfs \\
-    --net \\
+    --scratch /tmp \\
+    --env PASSWD_ENTRY="felix:x:23576:10086::/home/felix:/bin/bash" \\
+    --env GROUP_ENTRY="felix:x:10086:" \\
     run_match.sif \\
-    python3 /opt/run_match.py \\
-        --agent-paths "/opt/$agent1_name" "/opt/$agent2_name" \\
+    bash -c 'echo "$PASSWD_ENTRY" > /etc/passwd && echo "$GROUP_ENTRY" > /etc/group && python3 /opt/run_match.py \\
+        --agent-paths "/opt/$(basename $agent1_path .sif)" "/opt/$(basename $agent2_path .sif)" \\
         --starting-board {formatted_starting_board} \\
-        --results-dir /opt/match_results/
+        --results-dir /opt/match_results/'
 """
         print('Writing job script to', self.job_script_path)
         self.job_script_path.write_text(script_content)
