@@ -9,9 +9,18 @@ From: python:3.12-slim
     # Set noninteractive frontend
     export DEBIAN_FRONTEND=noninteractive
     
-    # Install system dependencies for Apptainer
+    # Create and set permissions for tmp directory
+    mkdir -p /tmp
+    chmod 1777 /tmp
+    
+    # Basic system setup
     apt-get update && apt-get install -y \
         wget \
+        gnupg \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install system dependencies for Apptainer
+    apt-get update && apt-get install -y \
         squashfs-tools \
         cryptsetup \
         fuse2fs \
@@ -25,7 +34,7 @@ From: python:3.12-slim
     rm apptainer_1.0.0_amd64.deb
     
     # Create directories
-    mkdir -p /opt /tmp
+    mkdir -p /opt
 
     # Install Python packages from requirements
     python3 -m pip install --no-cache-dir -r /requirements.txt
