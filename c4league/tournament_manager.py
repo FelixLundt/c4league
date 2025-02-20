@@ -224,7 +224,6 @@ class TournamentManager:
 # Debug info
 echo "Debug information:"
 echo "Current directory: $(pwd)"
-echo "Apptainer version: $(apptainer --version)"
 echo "Python version: $(python3 --version)"
 echo "Environment variables:"
 env | sort
@@ -242,46 +241,11 @@ echo "Match ID: $match_id"
 echo "Agent 1: $agent1_path -> $agent1_name"
 echo "Agent 2: $agent2_path -> $agent2_name"
 
-# Mount only existing paths
-apptainer exec \\
-    --bind {str(self.c4league_package_root)}:/opt/c4league \\
-    --bind {os.getenv("C4UTILS_DIR")}:/opt/c4utils \\
-    --bind {os.getenv("C4LEAGUE_ROOT_DIR")}/run_match.py:/opt/run_match.py \\
-    --bind {str(self.results_dir)}/$match_id:/opt/match_results/ \\
-    --bind $agent1_path:/opt/$(basename $agent1_path .sif) \\
-    --bind $agent2_path:/opt/$(basename $agent2_path .sif) \\
-    --bind /usr/bin/apptainer:/usr/bin/apptainer \\
-    --bind /usr/bin/unsquashfs:/usr/bin/unsquashfs \\
-    --bind /usr/bin/fusermount:/usr/bin/fusermount \\
-    --bind /usr/bin/squashfuse:/usr/bin/squashfuse \\
-    --bind /usr/bin/fuse2fs:/usr/bin/fuse2fs \\
-    --bind /usr/bin/fusermount3:/usr/bin/fusermount3 \\
-    --bind /etc/apptainer:/etc/apptainer \\
-    --bind /usr/libexec/apptainer:/usr/libexec/apptainer \\
-    --bind /usr/libexec/apptainer/bin/starter:/usr/libexec/apptainer/bin/starter \\
-    --bind /usr/libexec/apptainer/bin/squashfuse_ll:/usr/libexec/apptainer/bin/squashfuse_ll \\
-    --bind /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2 \\
-    --bind /lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu \\
-    --bind /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu \\
-    --bind /etc/passwd:/etc/passwd \\
-    --bind /etc/group:/etc/group \\
-    --bind /proc:/proc \\
-    --bind /sys:/sys \\
-    --bind /dev:/dev \\
-    --bind /var/lib/apptainer:/var/lib/apptainer \\
-    --bind /var/run/apptainer:/var/run/apptainer \\
-    --bind /lib64:/lib64 \\
-    --bind /usr/lib64:/usr/lib64 \\
-    --contain \\
-    --writable-tmpfs \\
-    --scratch /tmp \\
-    --env PASSWD_ENTRY="felix:x:23576:10086::/home/felix:/bin/bash" \\
-    --env GROUP_ENTRY="felix:x:10086:" \\
-    run_match.sif \\
-    bash -c 'echo "$PASSWD_ENTRY" > /etc/passwd && echo "$GROUP_ENTRY" > /etc/group && python3 /opt/run_match.py \\
-        --agent-paths "/opt/$(basename $agent1_path .sif)" "/opt/$(basename $agent2_path .sif)" \\
-        --starting-board {formatted_starting_board} \\
-        --results-dir /opt/match_results/'
+# Run the match directly with Python
+python3 {self.root_dir}/run_match.py \\
+    --agent-paths "$agent1_path" "$agent2_path" \\
+    --starting-board {formatted_starting_board} \\
+    --results-dir "{str(self.results_dir)}/$match_id"
 """
         print('Writing job script to', self.job_script_path)
         self.job_script_path.write_text(script_content)
