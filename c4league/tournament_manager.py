@@ -263,9 +263,11 @@ python3 {self.root_dir}/run_match.py \\
         match_stats = []
         for match_id, (player1, player2) in self.matches.items():
             match_results_dir = self._get_match_path(match_id)
-            print(f'Processing results for match {match_id}...')
+            print(f'Processing results for match {match_id}, checking {match_results_dir}...')
             # Check for game result files
-            game_result_files = [_file for _file in match_results_dir.iterdir() if _file.name.endswith('.json') and _file.name[-11:9] == '_g']
+            print('Found files:')
+            print(list(match_results_dir.iterdir()))
+            game_result_files = [_file for _file in match_results_dir.iterdir() if _file.name.endswith('.json') and _file.name[-11:-9] == '_g']
             if len(game_result_files) != 4:
                 print(f'Not all game result files found for match {match_id}')
                 continue
