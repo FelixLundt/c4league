@@ -23,12 +23,19 @@ class TournamentPlayer:
     def __hash__(self):
         return hash(self.team_name + self.agent_name + self.version)
     
+    def __str__(self) -> str:
+        return f"{self.team_name}_{self.agent_name}_v{self.version}"
+
 def tournament_player_from_dict(param_dict: dict) -> 'TournamentPlayer':
     return TournamentPlayer(
         team_name=param_dict['team_name'],
         agent_name=param_dict['agent_name'],
         version=param_dict['version']
     )
+
+def tournament_player_from_str(player_str: str) -> 'TournamentPlayer':
+    team_name, agent_name, _version = player_str.split('_')
+    return TournamentPlayer(team_name, agent_name, _version[1:])
 
 def generate_id() -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=ID_DIGITS))

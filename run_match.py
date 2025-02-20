@@ -113,7 +113,7 @@ def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: 
             )
             with open(f'{str(results_dir)}/{game_id}.json', 'w', encoding='utf-8') as f:
                 json.dump(game_stats.generate_json(), f, ensure_ascii=False, indent=4)
-
+    print(f'Match {match_id} completed.')
 
 if __name__ == '__main__':
     args = parse_args()

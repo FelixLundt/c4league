@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import time
 from c4utils.c4_types import Board, Move, Player
 
-from ..utils import TournamentPlayer, tournament_player_from_dict
+from ..utils import TournamentPlayer, tournament_player_from_dict, tournament_player_from_str
 from ..params import MINI_MATCH_GAMES
 
 TIMESTAMP_FORMAT = '%Y-%m-%d-%H:%M:%S'
@@ -32,11 +32,11 @@ class GameStats:
             'match_id': self.match_id,
             'tournament_id': self.tournament_id,
             'timestamp': self.timestamp,
-            'player1': self.player1.get_dict(),
-            'player2': self.player2.get_dict(),
+            'player1': str(self.player1),
+            'player2': str(self.player2),
             'initial_board': self.initial_board.tolist(),
             'moves': [int(move) for move in self.moves],
-            'winner': self.winner.get_dict() if self.winner is not None else None,
+            'winner': str(self.winner) if self.winner is not None else None,
             'reason': self.reason,
             'traceback': self.traceback,
         }
@@ -45,9 +45,9 @@ def game_stats_from_json(json_data: dict) -> 'GameStats':
     raw_data = json_data
     raw_data['initial_board'] = np.array(json_data['initial_board'], dtype=Player)
     raw_data['moves'] = [Move(move) for move in json_data['moves']]
-    raw_data['player1'] = tournament_player_from_dict(json_data['player1'])
-    raw_data['player2'] = tournament_player_from_dict(json_data['player2'])
-    raw_data['winner'] = tournament_player_from_dict(json_data['winner']) if json_data['winner'] is not None else None
+    raw_data['player1'] = tournament_player_from_str(json_data['player1'])
+    raw_data['player2'] = tournament_player_from_str(json_data['player2'])
+    raw_data['winner'] = tournament_player_from_str(json_data['winner']) if json_data['winner'] is not None else None
     return GameStats(**raw_data)
 
 @dataclass
@@ -65,14 +65,14 @@ class MatchStats:
             'game_ids': self.game_ids,
             'tournament_id': self.tournament_id,
             'timestamp': self.timestamp,
-            'players': [player.get_dict() for player in self.players],
-            'result': {player.get_dict(): score for player, score in self.result.items()}
+            'players': [str(player) for player in self.players],
+            'result': {str(player): score for player, score in self.result.items()}
         }
     
 def match_stats_from_json(json_data: dict) -> 'MatchStats':
-    raw_data = json_data
-    raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
-    raw_data['result'] = {tournament_player_from_dict(player): score for player, score in json_data['result'].items()}
+    raw_data = json_data.copy()
+    raw_data['players'] = [tournament_player_from_str(player) for player in json_data['players']]
+    raw_data['result'] = {tournament_player_from_str(player): score for player, score in json_data['result'].items()}
     return MatchStats(**raw_data)
 
 @dataclass
@@ -88,14 +88,14 @@ class TournamentStats:
             'tournament_id': self.tournament_id,
             'timestamp': self.timestamp,
             'match_ids': self.match_ids,
-            'players': [player.get_dict() for player in self.players],
-            'table': [(player.get_dict(), score) for player, score in self.table]
+            'players': [str(player) for player in self.players],
+            'table': [(str(player), score) for player, score in self.table]
         }
 
 def tournament_stats_from_json(json_data: dict) -> 'TournamentStats':
-    raw_data = json_data
-    raw_data['players'] = [tournament_player_from_dict(player) for player in json_data['players']]
-    raw_data['table'] = [(tournament_player_from_dict(player), score) for player, score in json_data['table']]
+    raw_data = json_data.copy()
+    raw_data['players'] = [tournament_player_from_str(player) for player in json_data['players']]
+    raw_data['table'] = [(tournament_player_from_str(player), score) for player, score in json_data['table']]
     return TournamentStats(**raw_data)
 
 def generate_match_stats_from_game_stats(games: list[GameStats]) -> MatchStats:
