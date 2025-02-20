@@ -265,19 +265,17 @@ python3 {self.root_dir}/run_match.py \\
         match_stats = []
         for match_id, (player1, player2) in self.matches.items():
             match_results_dir = self._get_match_path(match_id)
-            print(f'Processing results for match {match_id}, checking {match_results_dir}...')
-            # Check for game result files
-            print('Found files:')
-            print(list(match_results_dir.iterdir()))
+            print(f'Processing results for match {match_id} between {player1} and {player2}')
+            
             game_result_files = [_file for _file in match_results_dir.iterdir() if _file.name.endswith('.json') and _file.name[-12:-10] == '_g']
             if len(game_result_files) != 4:
                 print(f'Not all game result files found for match {match_id}')
                 continue
             else:
                 print(f'Found all {len(game_result_files)} game result files for match {match_id}')
+                print(f'Processing game result files...')
                 game_stats = []
                 for game_result_file in game_result_files:
-                    print(f'Processing game result file {game_result_file}')
                     with open(game_result_file, 'r') as f:
                         game_stats.append(game_stats_from_json(json.load(f)))
                 print('Generating match stats...')
