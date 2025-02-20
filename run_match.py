@@ -73,7 +73,7 @@ def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: 
             _agent_paths = agent_paths[::play_first]
             _players = players[::play_first]
             print(f'Playing first: {_players[0]}')
-            winner, moves, error = play_match(_agent_paths[0], _agent_paths[1], move_timeout=0.02*TIMEOUT, initial_board=_starting_board)
+            winner, moves, error = play_match(_agent_paths[0], _agent_paths[1], move_timeout=TIMEOUT, initial_board=_starting_board)
 
             print(f'Winner: {winner}, Moves: {[int(move) for move in moves]}, Error: {error}')
             
@@ -91,8 +91,10 @@ def run_match(agent_paths: list[Path], starting_board: np.ndarray, results_dir: 
                 _traceback = None
             else:
                 _traceback = ''.join(traceback.format_exception(error))
-                if 'AgentRuntimeError' in _traceback:
-                    reason = 'AgentRuntimeError (crash or timeout)'
+                if 'MoveTimeoutError' in _traceback:
+                    reason = 'MoveTimeoutError'
+                elif 'AgentRuntimeError' in _traceback:
+                    reason = 'AgentRuntimeError'
                 elif 'Invalid move:' in _traceback:
                     reason = 'Invalid move'
                 else:

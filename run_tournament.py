@@ -5,7 +5,7 @@ from pathlib import Path
 from c4league.tournament_manager import TournamentManager
 from c4league.storage.cloud_storage import get_submitted_agents
 from c4league.utils import TournamentPlayer, get_new_agents, get_updated_agents
-from c4league.container_utils import containerize_agents, get_containerized_agents
+from c4league.container_utils import containerize_agents, get_containerized_agents, remove_old_agents
 
 
 def run_tournament():
@@ -40,12 +40,19 @@ def run_tournament():
     print(f'Found {len(new_agents)} new agents and {len(updated_agents)} updated agents.')
 
     # Build new/updated agents
-    print('Building new/updated agents...')
-    try:
-        containerize_agents(new_agents + updated_agents)
-    except Exception as e:
-        print(f'Error building agents: {e}')
-        exit(1)
+    if len(new_agents) > 0 or len(updated_agents) > 0:
+        if len(updated_agents) > 0:
+            print('Removing old agents...')
+            remove_old_agents(updated_agents)
+        print('Building new/updated agents...')
+        try:
+            containerize_agents(new_agents + updated_agents)
+        except Exception as e:
+            print(f'Error building agents: {e}')
+            exit(1)
+        
+    else:
+        print('No new or updated agents to build.')
 
     # Set up tournament manager
     # Needs to:

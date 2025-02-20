@@ -22,6 +22,10 @@ def get_containerized_agents() -> list[TournamentPlayer]:
 def get_sif_file_path_from_tournament_player(tournament_player: TournamentPlayer) -> str:
     return os.path.join(os.getenv("AGENT_CONTAINER_DIRECTORY"), get_sif_file_name_from_tournament_player(tournament_player))
 
+def remove_old_agents(agents: list[TournamentPlayer]) -> None:
+    for agent in agents:
+        os.remove(get_sif_file_path_from_tournament_player(agent))
+
 def containerize_agents(agents: list[TournamentPlayer]) -> None:
     for agent in agents:
         temp_dir = None
@@ -116,3 +120,5 @@ rm -rf "$TEMP_DIR"
         finally:
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
+                print(f"Removed temp directory {temp_dir}")
+                print(f"Containerized {agent.team_name} {agent.agent_name}.")

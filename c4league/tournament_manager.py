@@ -159,7 +159,7 @@ class TournamentManager:
         
         # Extract job ID from sbatch output
         job_id = result.stdout.strip().split()[-1]
-        
+        print(f'Submitted tournament job with id {job_id}')
         return job_id
     
     def check_job_progress(self, tournament_job_id: str) -> dict[str, int]:
@@ -188,6 +188,7 @@ class TournamentManager:
     
     def wait_for_all_jobs(self, tournament_job_id: str, check_interval: int = 30) -> dict[str, dict]:
         """Wait for all jobs to complete"""
+        time.sleep(10)
         while True:
             progress = self.check_job_progress(tournament_job_id)
             total_jobs_queued = sum(progress.values())
