@@ -261,30 +261,95 @@ python3 {self.root_dir}/run_match.py \\
     def process_results(self):
         """Process the results of the tournament"""
         match_stats = []
+        
+        print("\nCurrent working directory:", os.getcwd())
+        print("Tournament ID:", self.tournament_id)
+        print("Results dir from env:", os.getenv("TOURNAMENT_RESULTS_DIRECTORY"))
+        
         for match_id, (player1, player2) in self.matches.items():
-            match_results_dir = self._get_match_path(match_id)
-            print(f'Processing results for match {match_id}, checking {match_results_dir}...')
-            # Check for game result files
-            print('Found files:')
-            print(list(match_results_dir.iterdir()))
-            game_result_files = [_file for _file in match_results_dir.iterdir() if _file.name.endswith('.json') and _file.name[-11:-9] == '_g']
-            if len(game_result_files) != 4:
-                print(f'Not all game result files found for match {match_id}')
-                continue
-            else:
-                print(f'Found all {len(game_result_files)} game result files for match {match_id}')
-                for game_result_file in game_result_files:
-                    game_stats = []
-                    print(f'Processing game result file {game_result_file}')
-                    with open(game_result_file, 'r') as f:
-                        game_stats.append(game_stats_from_json(json.load(f)))
+            # Print both the relative and absolute paths we're trying
+            relative_path = self.results_dir / match_id
+            absolute_path = Path(f"/home/cognition/home/felix/Tournament/c4league/tournament_results/{self.tournament_id}/{match_id}")
+            
+            print(f'\nProcessing results for match {match_id}')
+            print(f'Relative path: {relative_path}')
+            print(f'Absolute path: {absolute_path}')
+            print(f'Relative path exists: {relative_path.exists()}')
+            print(f'Absolute path exists: {absolute_path.exists()}')
+            
+            # Try both paths
+            print('\nTrying relative path:')
+            try:
+                files = os.listdir(relative_path)
+                print(f'Files found (relative): {files}')
+            except Exception as e:
+                print(f'Error listing relative path: {e}')
+                
+            print('\nTrying absolute path:')
+            try:
+                files = os.listdir(absolute_path)
+                print(f'Files found (absolute): {files}')
+            except Exception as e:
+                print(f'Error listing absolute path: {e}')
+            
+            # Use whichever path worked
+            match_results_dir = relative_path if relative_path.exists() else absolute_path
+            print(f'\nUsing directory: {match_results_dir}')
+            
+            try:
+                files = os.listdir(match_results_dir)
+                game_files = [f for f in files if f.endswith('.json') and '_g' in f]
+                print(f'Found files: {game_files}')
+                
+                if len(game_files) != 4:
+                    print(f'Expected 4 game files, but found {len(game_files)}')
+                    continue
+                
+                # Process game files
+                game_stats = []
+                for game_file in game_files:
+                    game_path = match_results_dir / game_file
+                    print(f'Processing game file: {game_file}')
+                    try:
+                        with open(game_path, 'r') as f:
+                            game_stats.append(game_stats_from_json(json.load(f)))
+                    except Exception as e:
+                        print(f'Error reading game file {game_file}: {e}')
+                        continue
+                
+                if not game_stats:
+                    print('No game stats were successfully processed')
+                    continue
+                
+                # Generate and save match stats
                 print('Generating match stats...')
                 _match_stats = generate_match_stats_from_game_stats(game_stats)
-                with open(match_results_dir / f'{match_id}.json', 'w') as f:
-                    json.dump(_match_stats.generate_json(), f, ensure_ascii=False, indent=4)
-                match_stats.append(_match_stats)
-        print('Generating tournament stats...')
+                match_stats_path = match_results_dir / f'{match_id}.json'
+                
+                try:
+                    with open(match_stats_path, 'w') as f:
+                        json.dump(_match_stats.generate_json(), f, ensure_ascii=False, indent=4)
+                    match_stats.append(_match_stats)
+                    print(f'Match stats saved to {match_stats_path}')
+                except Exception as e:
+                    print(f'Error writing match stats: {e}')
+                    
+            except Exception as e:
+                print(f'Error processing match directory: {e}')
+                continue
+        
+        if not match_stats:
+            print('\nNo matches were successfully processed!')
+            return
+        
+        # Generate and save tournament stats
+        print('\nGenerating tournament stats...')
         tournament_stats = generate_tournament_stats_from_match_stats(match_stats)
-        with open(self.results_dir / f'{self.tournament_id}.json', 'w') as f:
-            json.dump(tournament_stats.generate_json(), f, ensure_ascii=False, indent=4)
-        print('Generating stats completed.')
+        tournament_stats_path = match_results_dir.parent / f'{self.tournament_id}.json'
+        
+        try:
+            with open(tournament_stats_path, 'w') as f:
+                json.dump(tournament_stats.generate_json(), f, ensure_ascii=False, indent=4)
+            print(f'Tournament stats saved to {tournament_stats_path}')
+        except Exception as e:
+            print(f'Error writing tournament stats: {e}')
